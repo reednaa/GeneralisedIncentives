@@ -13,10 +13,20 @@ import {
 } from "vibc-core-smart-contracts/IbcMiddleware.sol";
 
 /// @notice Polymer implementation of the Generalised Incentives based on vIBC.
+/// @dev Notice that since the relayer is read from tx.origin, this implementation only works between EVM chains.
 contract IncentivizedPolymerEscrow is IMETimeoutExtension, IbcMwUser, IbcUniversalPacketReceiver {
-    error NotEnoughGasProvidedForVerification();
     error NonVerifiableMessage();
     error NotImplemented();
+
+    struct VerifiedMessageHashContext {
+        bytes32 chainIdentifier;
+        bytes implementationIdentifier;
+    }
+
+    // packet will timeout if it's delivered on the destination chain after (this block time + _TIMEOUT_AFTER_BLOCK).
+    uint64 constant _TIMEOUT_AFTER_BLOCK = 1 days;
+
+    mapping(bytes32 => VerifiedMessageHashContext) public isVerifiedMessageHash;
 
     // Internal function for gas savings.
     function _UNIQUE_SOURCE_IDENTIFIER() internal view returns (bytes32) {
@@ -27,15 +37,6 @@ contract IncentivizedPolymerEscrow is IMETimeoutExtension, IbcMwUser, IbcUnivers
     function UNIQUE_SOURCE_IDENTIFIER() external view returns (bytes32) {
         return _UNIQUE_SOURCE_IDENTIFIER();
     }
-
-    struct VerifiedMessageHashContext {
-        bytes32 chainIdentifier;
-        bytes implementationIdentifier;
-    }
-
-    mapping(bytes32 => VerifiedMessageHashContext) public isVerifiedMessageHash;
-    // packet will timeout if it's delivered on the destination chain after (this block time + _TIMEOUT_AFTER_BLOCK).
-    uint64 constant _TIMEOUT_AFTER_BLOCK = 1 days;
 
     constructor(address sendLostGasTo, address messagingProtocol)
         IMETimeoutExtension(sendLostGasTo)
@@ -60,6 +61,7 @@ contract IncentivizedPolymerEscrow is IMETimeoutExtension, IbcMwUser, IbcUnivers
 
     /// @notice This function is used to allow acks to be executed twice (if the first one ran out of gas)
     /// This is not intended to allow processPacket to work.
+    /// When packages arrive on ack, they are stored such that the verification scheme works.
     function _verifyPacket(bytes calldata, /* _metadata */ bytes calldata _message)
         internal
         view
@@ -83,9 +85,13 @@ contract IncentivizedPolymerEscrow is IMETimeoutExtension, IbcMwUser, IbcUnivers
         revert NotImplemented();
     }
 
-    // packet.srcPortAddr is the IncentivizedPolymerEscrow address on the source chain.
-    // packet.destPortAddr is the address of this contract.
-    // channelId: the universal channel id from the running chain's perspective, which can be used to identify the counterparty chain.
+    /**
+     * @notice Called when a package arrives from a Polymer relayer.
+     * @param channelId The universal channel id from the running chain's perspective, which can be used to identify the counterparty chain.
+     * @param packet The packet along with packet context.
+     *  packet.srcPortAddr is the IncentivizedPolymerEscrow address on the source chain.
+     *  packet.destPortAddr is the address of this contract.
+     */
     function onRecvUniversalPacket(bytes32 channelId, UniversalPacket calldata packet)
         external
         onlyIbcMw
@@ -103,7 +109,13 @@ contract IncentivizedPolymerEscrow is IMETimeoutExtension, IbcMwUser, IbcUnivers
         return AckPacket({success: true, data: receiveAck});
     }
 
-    // The escrow manages acks, so any message can be directly provided to _handleAck.
+    /**
+     * @notice Called when a package is acked.
+     * @param channelId The universal channel id from the running chain's perspective, which can be used to identify the counterparty chain.
+     * @param packet The packet along with packet context.
+     * @param ack The ack from the destination chain. Note that acknowledgement data is used over the package data
+     * even if there is repeated information. That is a limitation of the design of Generalised Incentives.
+     */
     function onUniversalAcknowledgement(bytes32 channelId, UniversalPacket calldata packet, AckPacket calldata ack)
         external
         onlyIbcMw
@@ -114,6 +126,7 @@ contract IncentivizedPolymerEscrow is IMETimeoutExtension, IbcMwUser, IbcUnivers
         bytes calldata rawMessage = ack.data;
         bytes memory destinationImplementationIdentifier = abi.encodePacked(packet.destPortAddr);
 
+        // Allow acks to be redelivered.
         isVerifiedMessageHash[keccak256(rawMessage)] = VerifiedMessageHashContext({
             chainIdentifier: channelId,
             implementationIdentifier: destinationImplementationIdentifier
@@ -121,7 +134,12 @@ contract IncentivizedPolymerEscrow is IMETimeoutExtension, IbcMwUser, IbcUnivers
         _handleAck(channelId, destinationImplementationIdentifier, rawMessage, feeRecipitent, gasLimit);
     }
 
-    // For timeouts, we need to construct the message.
+    /**
+     * @notice Called when a package is timedout.
+     * @dev This is a special case when the package hasn't executed on the destination chain and an
+     * "ack-ish" is returned. The special handler: _handleTimeout is used to fix the packet. 
+     * @param packet The packet along with packet context.
+     */
     function onTimeoutUniversalPacket(bytes32 channelId, UniversalPacket calldata packet) external onlyIbcMw {
         uint256 gasLimit = gasleft();
         bytes32 feeRecipitent = bytes32(uint256(uint160(tx.origin)));
@@ -130,8 +148,8 @@ contract IncentivizedPolymerEscrow is IMETimeoutExtension, IbcMwUser, IbcUnivers
         _handleTimeout(channelId, rawMessage, feeRecipitent, gasLimit);
     }
 
-    // * Send to messaging_protocol
     /**
+     * @notice Send to Polymer for handling
      * @param destinationChainIdentifier  Universal Channel ID. It's always from the running chain's perspective.
      * Each universal channel/channelId represents a directional path from the running chain to a destination chain.
      * Universal ChannelIds should _destChainIdToChannelIdd from the Polymer registry.
