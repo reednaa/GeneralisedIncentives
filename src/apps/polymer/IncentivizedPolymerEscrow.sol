@@ -4,13 +4,13 @@ pragma solidity ^0.8.13;
 import {IMETimeoutExtension} from "../../TimeoutExtension.sol";
 import {MockOnRecvAMB} from "../../../test/mocks/MockOnRecvAMB.sol";
 
-import {AckPacket} from "vibc-core-smart-contracts/Ibc.sol";
+import {AckPacket} from "vibc-core-smart-contracts/contracts/Ibc.sol";
 import {
     IbcMwUser,
     UniversalPacket,
     IbcUniversalPacketSender,
     IbcUniversalPacketReceiver
-} from "vibc-core-smart-contracts/IbcMiddleware.sol";
+} from "vibc-core-smart-contracts/contracts/IbcMiddleware.sol";
 
 /// @notice Polymer implementation of the Generalised Incentives based on vIBC.
 /// @dev Notice that since the relayer is read from tx.origin, this implementation only works between EVM chains.
