@@ -17,6 +17,7 @@ import {
 contract IncentivizedPolymerEscrow is IMETimeoutExtension, IbcMwUser, IbcUniversalPacketReceiver {
     error NonVerifiableMessage();
     error NotImplemented();
+    error MessagingProtocolSetToAddress0();
 
     struct VerifiedMessageHashContext {
         bytes32 chainIdentifier;
@@ -41,7 +42,9 @@ contract IncentivizedPolymerEscrow is IMETimeoutExtension, IbcMwUser, IbcUnivers
     constructor(address sendLostGasTo, address messagingProtocol)
         IMETimeoutExtension(sendLostGasTo)
         IbcMwUser(messagingProtocol)
-    {}
+    {
+        if (messagingProtocol == address(0)) revert MessagingProtocolSetToAddress0();
+    }
 
     function estimateAdditionalCost() external pure returns (address asset, uint256 amount) {
         asset = address(0);
