@@ -16,7 +16,7 @@ contract MessageIdentifierTest is TestCommon {
             incentive
         );
 
-        assertEq(messageIdentifier, bytes32(0x7d115fc12d69b0838b2ba4a0a17beac33c5aa489e50d17565642b46e724a1b1f));
+        assertEq(messageIdentifier, bytes32(0xeca29e84ea0280a3e98a4098b4bf35548bef49d3dacde96f706141a0dd4a2181));
     }
 
     function test_unique_identifier_block_11() public {
@@ -29,7 +29,7 @@ contract MessageIdentifierTest is TestCommon {
             incentive
         );
 
-        assertEq(messageIdentifier, bytes32(0xeaa2656c806ede225c7826a7d7f26fbc0f3ba4c918a54ed06a04842f76fef24b));
+        assertEq(messageIdentifier, bytes32(0xa765b8450b82b6414e1a0a7c9f29b7a4bf765418fd1ebbb2c0d1387e5ca68da0));
     }
 
     // Even with the same message, the identifier should be different between blocks.
@@ -75,7 +75,7 @@ contract MessageIdentifierTest is TestCommon {
             incentive
         );
 
-        assertEq(messageIdentifier1, bytes32(0x7d9ecc6ce9343b45ddf5643fdc24b97e1dafea3c3859295759ad4b292ad08cf1));
-        assertEq(messageIdentifier2, bytes32(0x373c6daaaee9fb27298c4ae298c8922b86a3cc41c9869d102aeb5ca37da7cf4a));
+        assertEq(messageIdentifier1, bytes32(0xc0f4349df5f57ff2f68c0ae93122b7a08b5ac257a177034ca9413888c98233b1));
+        assertEq(messageIdentifier2, bytes32(0x66f1c758c87880231890b3c2739cd728621b9a76666c506477f1b01d3e861b05));
     }
 }

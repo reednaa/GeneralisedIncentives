@@ -67,6 +67,7 @@ abstract contract IncentivizedMessageEscrow is IIncentivizedMessageEscrow, Bytes
 
     /// @notice Generates a unique message identifier for a message
     /// @dev Should be overwritten. The identifier should:
+    /// -  Be unique for a particular implementation: Use a unique version id or address(this)
     ///  - Be unique over time: Use blocknumber or blockhash
     ///  - Be unique on destination chain: Use a unique source identifier 
     ///  - Be unique on the source chain: Use a unique destinationIdentifier

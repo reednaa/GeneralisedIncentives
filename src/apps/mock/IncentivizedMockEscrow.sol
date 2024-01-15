@@ -11,6 +11,7 @@ contract IncentivizedMockEscrow is IncentivizedMessageEscrow, Ownable2Step {
     bytes32 immutable public UNIQUE_SOURCE_IDENTIFIER;
     uint256 public costOfMessages;
     uint256 public accumulator = 1;
+    // address immutable private ADDRESS_THIS;
 
     event Message(bytes32 destinationIdentifier, bytes recipitent, bytes message);
 
@@ -18,6 +19,7 @@ contract IncentivizedMockEscrow is IncentivizedMessageEscrow, Ownable2Step {
         UNIQUE_SOURCE_IDENTIFIER = uniqueChainIndex;
         _transferOwnership(signer);
         costOfMessages = costOfMessages_;
+        // ADDRESS_THIS = address(this);
     }
 
     function estimateAdditionalCost() external view returns(address asset, uint256 amount) {
@@ -36,6 +38,7 @@ contract IncentivizedMockEscrow is IncentivizedMessageEscrow, Ownable2Step {
     ) internal override view returns(bytes32) {
         return keccak256(
             abi.encodePacked(
+                address(this),
                 bytes32(block.number),
                 UNIQUE_SOURCE_IDENTIFIER, 
                 destinationIdentifier,

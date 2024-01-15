@@ -13,6 +13,7 @@ contract OnRecvIncentivizedMockEscrow is IMETimeoutExtension {
     error NotImplemented();
     bytes32 immutable public UNIQUE_SOURCE_IDENTIFIER;
     address immutable public MESSAGING_PROTOCOL_CALLER;
+    // address immutable private ADDRESS_THIS;
 
     struct VerifiedMessageHashContext {
         bytes32 chainIdentifier;
@@ -25,6 +26,7 @@ contract OnRecvIncentivizedMockEscrow is IMETimeoutExtension {
     constructor(address sendLostGasTo, address messagingProtocol) IMETimeoutExtension(sendLostGasTo) {
         MESSAGING_PROTOCOL_CALLER = messagingProtocol;
         UNIQUE_SOURCE_IDENTIFIER = bytes32(uint256(111));  // Actual implementation should call to messagingProtocol
+        // ADDRESS_THIS = address(this);
     }
 
     // Verify that the sender is correct.
@@ -44,6 +46,7 @@ contract OnRecvIncentivizedMockEscrow is IMETimeoutExtension {
     ) internal override view returns(bytes32) {
         return keccak256(
             abi.encodePacked(
+                address(this),
                 bytes32(block.number),
                 UNIQUE_SOURCE_IDENTIFIER, 
                 destinationIdentifier,

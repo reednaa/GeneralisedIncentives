@@ -17,9 +17,11 @@ contract IncentivizedWormholeEscrow is IncentivizedMessageEscrow, WormholeVerifi
     );
 
     IWormhole public immutable WORMHOLE;
+    // address immutable private ADDRESS_THIS;
 
     constructor(address sendLostGasTo, address wormhole_) IncentivizedMessageEscrow(sendLostGasTo) WormholeVerifier(wormhole_) {
         WORMHOLE = IWormhole(wormhole_);
+        // ADDRESS_THIS = address(this);
     }
 
     function estimateAdditionalCost() external view returns(address asset, uint256 amount) {
@@ -33,6 +35,7 @@ contract IncentivizedWormholeEscrow is IncentivizedMessageEscrow, WormholeVerifi
     ) internal override view returns(bytes32) {
         return keccak256(
             abi.encodePacked(
+                address(this),
                 bytes32(block.number),
                 chainId(), 
                 destinationIdentifier,
