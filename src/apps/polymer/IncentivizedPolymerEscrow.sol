@@ -58,7 +58,7 @@ contract IncentivizedPolymerEscrow is IMETimeoutExtension, IbcMwUser, IbcUnivers
         returns (bytes32)
     {
         return keccak256(
-            abi.encodePacked(bytes32(block.number), _UNIQUE_SOURCE_IDENTIFIER(), destinationIdentifier, message)
+            abi.encodePacked(msg.sender, bytes32(block.number), _UNIQUE_SOURCE_IDENTIFIER(), destinationIdentifier, message)
         );
     }
 
