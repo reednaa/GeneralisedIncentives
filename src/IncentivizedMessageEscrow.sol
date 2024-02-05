@@ -96,7 +96,8 @@ abstract contract IncentivizedMessageEscrow is IIncentivizedMessageEscrow, Bytes
     /// @notice Sets the escrow implementation for a specific chain
     /// @dev This can only be set once. When set, is cannot be changed.
     /// This is to protect relayers as this could be used to fail acks.
-    function setRemoteImplementation(bytes32 destinationIdentifier, bytes calldata implementation) external {
+    // TODO: allow us to override so we can set receive lib for LZ on the call?
+    function setRemoteImplementation(bytes32 destinationIdentifier, bytes calldata implementation) external virtual {
         if (implementationAddressHash[msg.sender][destinationIdentifier] != bytes32(0)) revert ImplementationAddressAlreadySet(
             implementationAddress[msg.sender][destinationIdentifier]
         );
@@ -215,7 +216,9 @@ abstract contract IncentivizedMessageEscrow is IIncentivizedMessageEscrow, Bytes
             if (msg.value > sum) {
                 // We know: msg.value >= sum, thus msg.value - sum >= 0.
                 gasRefund = msg.value - sum;
-                payable(incentive.refundGasTo).transfer(gasRefund);
+                // Send the refund to the refund address.
+                payable(incentive.refundGasTo).call{value: gasRefund}("");
+
                 return (gasRefund, messageIdentifier);
             }
         }
@@ -252,6 +255,7 @@ abstract contract IncentivizedMessageEscrow is IIncentivizedMessageEscrow, Bytes
 
             // The cost management is made by _sendPacket so we don't have to check if enough gas has been provided.
             _sendPacket(chainIdentifier, implementationIdentifier, receiveAckWithContext);
+            // TODO: Refund any excess ETH paid.
         } else if (context == CTX_DESTINATION_TO_SOURCE) {
             _handleAck(chainIdentifier, implementationIdentifier, message, feeRecipient, gasLimit);
         } else {
