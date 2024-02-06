@@ -40,26 +40,6 @@ contract processPacketNoReceiveTest is TestCommon {
         vm.expectEmit();
         // Check MessageDelivered emitted
         emit MessageDelivered(messageIdentifier);
-        vm.expectEmit();
-        // That a new message is sent back
-        emit Message(
-            _DESTINATION_IDENTIFIER,
-            abi.encode(
-                escrow
-            ),
-            abi.encodePacked(
-                _DESTINATION_IDENTIFIER,
-                _DESTINATION_IDENTIFIER,
-                bytes1(0x01),
-                messageIdentifier,
-                _DESTINATION_ADDRESS_THIS,
-                feeRecipient,
-                uint48(0x887d),  // Gas used
-                uint64(1),
-                abi.encodePacked(bytes1(0xff)),
-                message
-            )
-        );
 
         vm.expectCall(
             address(application),

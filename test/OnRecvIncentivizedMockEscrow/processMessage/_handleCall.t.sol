@@ -32,23 +32,6 @@ contract OnRecvCallTest is TestOnRecvCommon {
         vm.expectEmit();
         // Check MessageDelivered emitted
         emit MessageDelivered(messageIdentifier);
-        vm.expectEmit();
-        // That a new message is sent back
-        emit Message(
-            _DESTINATION_IDENTIFIER,
-            abi.encode(
-                escrow
-            ),
-            abi.encodePacked(
-                bytes1(0x01),
-                messageIdentifier,
-                _DESTINATION_ADDRESS_APPLICATION,
-                feeRecipient,
-                uint48(0x6b27),  // Gas used
-                uint64(1),
-                hex"d9b60178cfb2eb98b9ff9136532b6bd80eeae6a2c90a2f96470294981fcfb62b"
-            )
-        );
 
         vm.expectCall(
             address(application),

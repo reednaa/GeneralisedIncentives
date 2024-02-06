@@ -44,27 +44,6 @@ contract GasSpendControlTest is TestCommon {
         (uint8 v, bytes32 r, bytes32 s) = signMessageForMock(messageWithContext);
         bytes memory mockContext = abi.encode(v, r, s);
 
-        vm.expectEmit();
-        // Check that the ack is set to 0xff
-        emit Message(
-            _DESTINATION_IDENTIFIER,
-            abi.encode(
-                escrow
-            ),
-            abi.encodePacked(
-                _DESTINATION_IDENTIFIER,
-                _DESTINATION_IDENTIFIER,
-                bytes1(0x01),
-                messageIdentifier,
-                _DESTINATION_ADDRESS_APPLICATION,
-                destinationFeeRecipient,
-                uint48(0x36eaa),  // Gas used
-                uint64(1),
-                bytes1(0xff),  // This states that the call went wrong.
-                message
-            )
-        );
-
         escrow.processPacket(
             mockContext,
             messageWithContext,

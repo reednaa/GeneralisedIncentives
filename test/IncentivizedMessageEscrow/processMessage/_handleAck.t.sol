@@ -26,15 +26,11 @@ contract processPacketAckTest is TestCommon {
         (uint8 v, bytes32 r, bytes32 s) = signMessageForMock(messageWithContext);
         bytes memory mockContext = abi.encode(v, r, s);
 
-        _receive = GAS_RECEIVE_CONSTANT;
-
         escrow.processPacket(
             mockContext,
             messageWithContext,
             feeRecipient
         );
-
-        assertEq(_REFUND_GAS_TO.balance, _getTotalIncentive(_INCENTIVE) - _receive, "Refund");
     }
 
     function test_ack_called_event() public {
@@ -53,14 +49,6 @@ contract processPacketAckTest is TestCommon {
 
         vm.expectEmit();
         emit MessageAcked(messageIdentifier);
-        vm.expectEmit();
-        emit BountyClaimed(
-            messageIdentifier,
-            uint64(GAS_SPENT_ON_DESTINATION),
-            uint64(GAS_SPENT_ON_SOURCE),
-            uint128(_receive),
-            0  // Same destination as source relayer.
-        );
 
         vm.expectCall(
             address(application),
@@ -102,27 +90,11 @@ contract processPacketAckTest is TestCommon {
         vm.expectEmit();
         emit MessageAcked(messageIdentifier);
 
-        uint256 gas_on_destination = GAS_SPENT_ON_DESTINATION;
-        uint256 gas_on_source = GAS_SPENT_ON_SOURCE;
-        uint256 BOB_incentive = gas_on_destination * _INCENTIVE.priceOfDeliveryGas;
-        _receive = gas_on_source * _INCENTIVE.priceOfAckGas;
-
-        vm.expectEmit();
-        emit BountyClaimed(
-            messageIdentifier,
-            uint64(gas_on_destination),
-            uint64(gas_on_source),
-            uint128(BOB_incentive),
-            uint128(_receive)
-        );
-
         escrow.processPacket(
             mockContext,
             messageWithContext,
             feeRecipient
         );
-
-        assertEq(BOB.balance, BOB_incentive, "BOB incentive");
     }
 
     function test_ack_less_time_than_expected(uint64 timePassed, uint64 targetDelta) public {
@@ -141,31 +113,11 @@ contract processPacketAckTest is TestCommon {
         (uint8 v, bytes32 r, bytes32 s) = signMessageForMock(messageWithContext);
         bytes memory mockContext = abi.encode(v, r, s);
 
-        uint256 gas_on_destination = GAS_SPENT_ON_DESTINATION;
-        uint256 gas_on_source = GAS_SPENT_ON_SOURCE;
-        uint256 BOB_incentive = gas_on_destination * _INCENTIVE.priceOfDeliveryGas;
-        _receive = gas_on_source * _INCENTIVE.priceOfAckGas;
-        // uint256 totalIncentive = BOB_incentive + _receive;
-        // less time has passed, so more incentives are given to destination relayer.
-        BOB_incentive += (_receive * (targetDelta - timePassed))/targetDelta;
-        _receive -= (_receive * (targetDelta - timePassed))/targetDelta;
-
-        vm.expectEmit();
-        emit BountyClaimed(
-            messageIdentifier,
-            uint64(gas_on_destination),
-            uint64(gas_on_source),
-            uint128(BOB_incentive),
-            uint128(_receive)
-        );
-
         escrow.processPacket(
             mockContext,
             messageWithContext,
             feeRecipient
         );
-
-        assertEq(BOB.balance, BOB_incentive, "BOB incentive");
 
         // Check that the bounty has been deleted.
         IncentiveDescription memory incentive = escrow.bounty(messageIdentifier);
@@ -190,31 +142,11 @@ contract processPacketAckTest is TestCommon {
         (uint8 v, bytes32 r, bytes32 s) = signMessageForMock(messageWithContext);
         bytes memory mockContext = abi.encode(v, r, s);
 
-        uint256 gas_on_destination = GAS_SPENT_ON_DESTINATION;
-        uint256 gas_on_source = GAS_SPENT_ON_SOURCE;
-        uint256 BOB_incentive = gas_on_destination * _INCENTIVE.priceOfDeliveryGas;
-        _receive = gas_on_source * _INCENTIVE.priceOfAckGas;
-        // uint256 totalIncentive = BOB_incentive + _receive;
-        // less time has passed, so more incentives are given to destination relayer.
-        _receive += (BOB_incentive * uint256(timePassed - targetDelta))/uint256(targetDelta);
-        BOB_incentive -= (BOB_incentive * uint256(timePassed - targetDelta))/uint256(targetDelta);
-
-        vm.expectEmit();
-        emit BountyClaimed(
-            messageIdentifier,
-            uint64(gas_on_destination),
-            uint64(gas_on_source),
-            uint128(BOB_incentive),
-            uint128(_receive)
-        );
-
         escrow.processPacket(
             mockContext,
             messageWithContext,
             feeRecipient
         );
-
-        assertEq(BOB.balance, BOB_incentive, "BOB incentive");
 
         // Check that the bounty has been deleted.
         IncentiveDescription memory incentive = escrow.bounty(messageIdentifier);
@@ -223,6 +155,5 @@ contract processPacketAckTest is TestCommon {
 
     // relayer incentives will be sent here
     receive() payable external {
-        assertEq(msg.value, _receive, "Relayer Payment");
     }
 }

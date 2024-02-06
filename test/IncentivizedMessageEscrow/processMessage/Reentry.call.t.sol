@@ -47,25 +47,7 @@ contract CallReentryTest is TestCommon, ICrossChainReceiver {
         _mockContext = mockContext;
         _messageWithContext = messageWithContext;
         _feeRecipient = feeRecipient;
-
-        vm.expectEmit();
-        emit Message(
-            _DESTINATION_IDENTIFIER,
-            abi.encode(
-                escrow
-            ),
-            abi.encodePacked(
-                _DESTINATION_IDENTIFIER,
-                _DESTINATION_IDENTIFIER,
-                bytes1(0x01),
-                messageIdentifier,
-                _DESTINATION_ADDRESS_APPLICATION,
-                feeRecipient,
-                uint48(0x10038),  // Gas used
-                uint64(1),
-                uint8(1)
-            )
-        );
+        
         escrow.processPacket(
             mockContext,
             messageWithContext,

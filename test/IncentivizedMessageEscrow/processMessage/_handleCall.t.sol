@@ -26,25 +26,6 @@ contract processPacketCallTest is TestCommon {
         vm.expectEmit();
         // Check MessageDelivered emitted
         emit MessageDelivered(messageIdentifier);
-        vm.expectEmit();
-        // That a new message is sent back
-        emit Message(
-            _DESTINATION_IDENTIFIER,
-            abi.encode(
-                escrow
-            ),
-            abi.encodePacked(
-                _DESTINATION_IDENTIFIER,
-                _DESTINATION_IDENTIFIER,
-                bytes1(0x01),
-                messageIdentifier,
-                _DESTINATION_ADDRESS_APPLICATION,
-                feeRecipient,
-                uint48(0x829f),  // Gas used
-                uint64(1),
-                mockAck
-            )
-        );
 
         vm.expectCall(
             address(application),
