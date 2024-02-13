@@ -1,5 +1,3 @@
-Contracts within this repo have not been audited and should not be used in production.
-
 # Generalised Incentive Escrow
 
 This repository contains an implementation of a generalized Incentive Scheme. 
